@@ -4,7 +4,19 @@ const { google } = require('googleapis');
 const SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/userinfo.profile'];
 const fs = require('fs');
 
-const content = {}
+const content = {
+  "installed": {
+    "client_id": "384632433368-tl2mr1rj9gu3c0oli2s7p0k2ir93h53r.apps.googleusercontent.com",
+    "project_id": "learnfirebase1-16219",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_secret": "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",
+    "redirect_uris": [
+      "http://localhost:5000/api/calendar/events"
+    ]
+  }
+}
 
 const getClient = () => {
   return new Promise((resolve, reject) => {
@@ -21,8 +33,8 @@ const getClient = () => {
 
 }
 
-const getAuthClient = (email) => {
-  return new Promise((resolve, reject) => {
+async function getAuthClient(email, code) {
+  return new Promise(async (resolve, reject) => {
     const oAuth2Client = await getClient();
 
     fs.readFile(`${email}.json`, (err, token) => {
@@ -69,7 +81,7 @@ exports.getCalendarEvents = asyncHandler(async (req, response, next) => {
   const code = req.query.code
   const email = req.query.email
 
-  const auth = await getAuthClient(email)
+  const auth = await getAuthClient(email, code)
 
   const calendar = google.calendar({ version: 'v3', auth: auth });
   calendar.events.list({
@@ -88,7 +100,7 @@ exports.getCalendarEvents = asyncHandler(async (req, response, next) => {
 exports.createEvent = asyncHandler(async (req, res, next) => {
   const { event, emailIds } = req.body
 
-  emailIds.forEach(email => {
+  emailIds.forEach(async (email) => {
     const auth = await getAuthClient(email)
     calendar.events.insert({
       auth: auth,
